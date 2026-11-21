@@ -43,7 +43,7 @@ Response (abridged):
       "forecast": { "p10": 546, "p50": 680, "p90": 951 },
       "stats": { "p_hard_all_sell": 0.97, "p_sold_out": 0.31 },
       "profit": { "expected": 1610000, "cvar": 1110000 },
-      "baseline": { "hard": 900, "expected": 740000, "cvar": -820000 },
+      "baseline": { "hard": 900, "expected": 880000, "cvar": -810000 },
       "reasons": ["Demand is forecast at 546 to 951 room-nights, most likely 680.", "..."],
       "alerts": [{ "kind": "release", "date": "2026-12-07", "title": "Release check for Goa · New Year week on 07 Dec" }]
     }
