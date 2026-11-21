@@ -1,0 +1,10 @@
+services:
+  inventiq:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - decisions:/app/data
+    restart: unless-stopped
+volumes:
+  decisions:

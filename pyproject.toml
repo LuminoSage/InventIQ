@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "inventiq"
+version = "1.0.0"
+description = "Pre-buy planning for travel inventory: range forecasts, 10,000 joint futures and a CVaR-aware budget optimiser"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "lightgbm>=4.3",
+    "scikit-learn>=1.4",          # for LightGBM's scikit-learn interface
+    "ortools>=9.10",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2.6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27", "ruff>=0.5"]
+
+[project.scripts]
+inventiq = "inventiq.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["inventiq*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning", "ignore::PendingDeprecationWarning"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = [
+    "B019",  # the engine lives for the whole process, so caching on its methods is intended
+    "E501",  # the formatter sets line length; long user-facing strings stay whole
+]
