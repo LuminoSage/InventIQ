@@ -22,3 +22,4 @@ web/dist/
 Thumbs.db
 desktop.ini
 web/*.tsbuildinfo
+web/dist-demo/

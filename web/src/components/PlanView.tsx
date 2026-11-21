@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Decision, OptionInfo, Plan, PlanRow, Risk } from "../api";
+import { BUDGET, DEMO, type Decision, type OptionInfo, type Plan, type PlanRow, type Risk } from "../api";
 import { inr, money, n0, pct, logPct } from "../format";
 import { DemandChart, Legend, ProfitChart, RangeBar } from "./charts";
 
@@ -20,7 +20,7 @@ export function Controls(props: {
     <div className="controls">
       <label className="budget">
         <span className="eyebrow">Budget</span>
-        <input type="range" min={2_500_000} max={50_000_000} step={500_000} value={draft}
+        <input type="range" min={BUDGET.min} max={BUDGET.max} step={BUDGET.step} value={draft}
           onChange={e => setDraft(Number(e.target.value))}
           onPointerUp={() => setBudget(draft)} onKeyUp={() => setBudget(draft)} onBlur={() => setBudget(draft)}
           aria-label="Budget for pre-buys" />
@@ -34,9 +34,14 @@ export function Controls(props: {
       </div>
       <div className="solver">
         <span className={`dot ${busy ? "dot--busy" : ""}`} />
-        <span>{busy ? "Optimising…" : plan ? `${plan.solver.method} · ${plan.solver.seconds.toFixed(2)} s · ${plan.solver.candidates} candidate plans` : "Loading"}</span>
+        <span>{busy ? (DEMO ? "Loading plan…" : "Optimising…") : plan
+          ? `${DEMO ? "Precomputed · " : ""}${plan.solver.method} · ${plan.solver.seconds.toFixed(2)} s · ${plan.solver.candidates} candidate plans`
+          : "Loading"}</span>
         {plan && plan.solver.exact_status !== "not run" && <span className="tag">SCIP: {plan.solver.exact_status}</span>}
-        <button type="button" className="btn btn--ghost" disabled={busy} onClick={onExact}>Verify with exact solver</button>
+        <button type="button" className="btn btn--ghost" disabled={busy || DEMO} onClick={onExact}
+          title={DEMO ? "The exact SCIP solve runs in the full app (see the GitHub README)" : "Re-solve exactly with SCIP"}>
+          Verify with exact solver
+        </button>
       </div>
     </div>
   );
@@ -65,7 +70,7 @@ export function Kpis({ plan }: { plan: Plan }) {
 
 function Thumb({ o }: { o: OptionInfo }) {
   return o.image
-    ? <img className="thumb" src={`/img/${o.image}`} alt="" loading="lazy" />
+    ? <img className="thumb" src={`${import.meta.env.BASE_URL}img/${o.image}`} alt="" loading="lazy" />
     : <span className="thumb thumb--icon" aria-hidden="true">{o.kind === "flight" ? "✈" : "⌂"}</span>;
 }
 
@@ -181,7 +186,11 @@ export function OptionDetail({ row, o, decision, onDecide, busy }: {
         <div className="actions">
           {decision ? (
             <>
-              <span className="muted">{decisionLabel(decision)} {new Date(decision.created_at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}. The rest of the plan is re-optimised around it.</span>
+              <span className="muted">
+                {decisionLabel(decision)}{decision.action === "edit" ? ` to ${n0(decision.hard ?? 0)} + ${n0(decision.allot ?? 0)}` : ""}{" "}
+                {new Date(decision.created_at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}.
+                {DEMO ? " Saved in this browser. In the full app the rest of the plan re-optimises around it." : " The rest of the plan is re-optimised around it."}
+              </span>
               <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => onDecide("undo")}>Undo</button>
             </>
           ) : (

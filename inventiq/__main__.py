@@ -22,6 +22,8 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="inventiq", description="Pre-buy planning for travel inventory")
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("build")
+    ex = sub.add_parser("export")
+    ex.add_argument("out", help="folder for the static snapshot, for example web/dist-demo/demo")
     b = sub.add_parser("backtest")
     b.add_argument("--json", action="store_true")
     pl = sub.add_parser("plan")
@@ -46,7 +48,12 @@ def main(argv: list[str] | None = None) -> int:
     from .engine import Engine
 
     eng = Engine()
-    if args.cmd == "build":
+    if args.cmd == "export":
+        from .export import export
+
+        res = export(args.out, eng)
+        print(f"wrote {res['files']} files, {res['bytes'] / 1e6:.1f} MB, to {args.out}")
+    elif args.cmd == "build":
         print(f"engine ready: {eng.meta()['history_rows']:,} history rows, {eng.meta()['scenarios']:,} futures")
     elif args.cmd == "backtest":
         bt = eng.backtest()

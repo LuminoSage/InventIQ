@@ -70,7 +70,7 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export const api = {
+const liveApi = {
   meta: () => call<Meta>("/api/meta"),
   options: () => call<OptionInfo[]>("/api/options"),
   plan: (budget: number, risk: Risk, exact = false) =>
@@ -78,7 +78,66 @@ export const api = {
   backtest: () => call<Backtest>("/api/backtest"),
   correlation: () => call<Correlation>("/api/correlation"),
   decisions: () => call<Decisions>("/api/decisions"),
-  decide: (body: { option_id: string; action: Decision["action"]; hard?: number; allot?: number; budget?: number; risk?: Risk; note?: string }) =>
-    call<Decision>("/api/decisions", { method: "POST", body: JSON.stringify(body) }),
+  decide: (body: DecisionBody) => call<Decision>("/api/decisions", { method: "POST", body: JSON.stringify(body) }),
   resetDecisions: () => call<{ cleared: boolean }>("/api/decisions", { method: "DELETE" }),
 };
+
+type DecisionBody = {
+  option_id: string; action: Decision["action"]; hard?: number; allot?: number; budget?: number; risk?: Risk; note?: string;
+};
+
+/*
+  Demo build (npm run build:demo): no server. Plans were computed by the engine for every budget from
+  ₹25 lakh to ₹5 crore in ₹25 lakh steps and each risk profile (python -m inventiq export), and are read
+  as static files. Decisions are kept in this browser's storage.
+*/
+export const DEMO = import.meta.env.VITE_DEMO === "1";
+const DEMO_STEP = 2_500_000;
+export const BUDGET = { min: 2_500_000, max: 50_000_000, step: DEMO ? DEMO_STEP : 500_000 };
+const DEMO_BASE = import.meta.env.BASE_URL + "demo/";
+const STORE_KEY = "inventiq-demo-decisions";
+let memoryLog: Decision[] | null = null;
+
+const snap = (b: number) => Math.min(BUDGET.max, Math.max(BUDGET.min, Math.round(b / DEMO_STEP) * DEMO_STEP));
+
+function loadLog(): Decision[] {
+  if (memoryLog) return memoryLog;
+  try { memoryLog = JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); } catch { memoryLog = []; }
+  return memoryLog ?? [];
+}
+
+function saveLog(log: Decision[]) {
+  memoryLog = log;
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(log)); } catch { /* storage blocked: keep it for this visit */ }
+}
+
+function decisionsOf(log: Decision[]): Decisions {
+  const current: Record<string, Decision> = {};
+  for (const d of log) {
+    if (d.action === "undo") delete current[d.option_id];
+    else current[d.option_id] = d;
+  }
+  return { current, log: [...log].reverse() };
+}
+
+const demoApi: typeof liveApi = {
+  meta: () => call<Meta>(DEMO_BASE + "meta.json"),
+  options: () => call<OptionInfo[]>(DEMO_BASE + "options.json"),
+  plan: (budget: number, risk: Risk) => call<Plan>(`${DEMO_BASE}plans/${risk}-${snap(budget) / 100_000}.json`),
+  backtest: () => call<Backtest>(DEMO_BASE + "backtest.json"),
+  correlation: () => call<Correlation>(DEMO_BASE + "correlation.json"),
+  decisions: async () => decisionsOf(loadLog()),
+  decide: async (body: DecisionBody) => {
+    const log = loadLog();
+    const d: Decision = {
+      id: log.length + 1, option_id: body.option_id, action: body.action, hard: body.hard ?? null,
+      allot: body.allot ?? null, budget: body.budget ?? null, risk: body.risk ?? null, note: body.note ?? null,
+      created_at: new Date().toISOString(),
+    };
+    saveLog([...log, d]);
+    return d;
+  },
+  resetDecisions: async () => { saveLog([]); return { cleared: true }; },
+};
+
+export const api = DEMO ? demoApi : liveApi;

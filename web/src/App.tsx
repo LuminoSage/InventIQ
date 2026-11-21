@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api, type Backtest, type Correlation, type Decision, type Decisions, type Meta, type OptionInfo, type Plan, type Risk } from "./api";
+import { api, DEMO, type Backtest, type Correlation, type Decision, type Decisions, type Meta, type OptionInfo, type Plan, type Risk } from "./api";
 import { Controls, Kpis, OptionDetail, OptionList, PortfolioPanel } from "./components/PlanView";
 import { AccuracyView, AlertsView, LogView } from "./components/OtherViews";
+
+const REPO = "https://github.com/LuminoSage/InventIQ";
 
 type Tab = "plan" | "alerts" | "accuracy" | "log";
 const TABS: { id: Tab; label: string }[] = [
@@ -95,11 +97,18 @@ export default function App() {
         </nav>
         <div className="top__meta">
           {meta && <span>{meta.season} · planning date {new Date(meta.today).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>}
-          <a href="/docs" target="_blank" rel="noreferrer">API</a>
+          {DEMO ? <a href={REPO} target="_blank" rel="noreferrer">GitHub</a> : <a href="/docs" target="_blank" rel="noreferrer">API</a>}
         </div>
       </header>
 
-      {error && <div className="error" role="alert">Could not reach the planning API: {error}. Start it with <code>python -m inventiq serve</code>.</div>}
+      {DEMO && (
+        <div className="demo" role="note">
+          <strong>Live demo.</strong> Every plan here was computed by the InventIQ engine for budgets in ₹25 lakh steps and
+          each risk level. Approvals are saved in your browser. To re-plan live around decisions and run the exact solver,
+          run the full app from <a href={REPO} target="_blank" rel="noreferrer">GitHub</a>.
+        </div>
+      )}
+      {error && <div className="error" role="alert">{DEMO ? `Could not load the demo data: ${error}.` : <>Could not reach the planning API: {error}. Start it with <code>python -m inventiq serve</code>.</>}</div>}
 
       {tab === "plan" && (
         <main className="planview">
@@ -118,9 +127,9 @@ export default function App() {
       {tab === "accuracy" && bt && corr && <AccuracyView bt={bt} corr={corr} options={options} />}
       {tab === "log" && <LogView log={decisions.log} options={options} onReset={reset} />}
 
-      <footer className="foot">
+      <footer className={`foot ${DEMO ? "foot--demo" : ""}`}>
         <span>InventIQ {meta?.version} · synthetic data shaped like a B2B travel distributor's feeds</span>
-        <span>Photographs via Wikimedia Commons, see CREDITS.md</span>
+        <span>Photographs via Wikimedia Commons, see <a href={`${REPO}/blob/main/CREDITS.md`} target="_blank" rel="noreferrer">CREDITS.md</a></span>
       </footer>
     </div>
   );
