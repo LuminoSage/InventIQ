@@ -1,5 +1,9 @@
 # InventIQ
 
+[![CI](https://github.com/LuminoSage/InventIQ/actions/workflows/ci.yml/badge.svg)](https://github.com/LuminoSage/InventIQ/actions/workflows/ci.yml)
+![Python 3.11 to 3.13](https://img.shields.io/badge/python-3.11%20%E2%80%93%203.13-3776AB)
+![License: MIT](https://img.shields.io/badge/license-MIT-a08672)
+
 **Pre-buy planning for travel inventory teams.** InventIQ forecasts demand for every hotel window and
 flight block as a range, plays every buying option through 10,000 joint futures, and splits a fixed
 budget between hard pre-buys and releasable allotment where the risk-adjusted return is highest. A buyer
