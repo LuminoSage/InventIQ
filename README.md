@@ -131,7 +131,7 @@ python scripts/benchmark.py                              # every table in this R
 ```sh
 python -m inventiq serve          # API on :8000
 cd web && npm run dev             # desk with hot reload on :5173 (proxies /api to :8000)
-pytest                            # 27 tests: data, forecast, futures, optimiser, shield, API
+pytest                            # 28 tests: data, forecast, futures, optimiser, shield, API, demo export
 ruff check . && ruff format --check .
 ```
 
